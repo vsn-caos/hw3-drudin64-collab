@@ -18,9 +18,22 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // TODO: откройте файл, получите его размер через fstat,
-    //       отобразите в память через mmap,
-    //       найдите все вхождения argv[2] и выведите их позиции
+    int fd = open(argv[1], O_RDONLY);
+    struct stat st;
+    fstat(fd, &st);
+
+    size_t file_size = st.st_size;
+    size_t str_size = strlen(argv[2]);
+    char *data = mmap(NULL, file_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+    for (size_t i = 0; i + str_size <= file_size; i++) {
+        if (memcmp(data + i, argv[2], str_size) == 0) {
+            printf("%zu\n", i);
+        }
+    }
+
+    munmap(data, file_size);
+    close(fd);
 
     return 0;
 }

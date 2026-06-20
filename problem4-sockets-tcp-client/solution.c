@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdint.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -22,12 +23,56 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s <ipv4_addr> <port>\n", argv[0]);
         return 1;
     }
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    struct sockaddr_in addr = {0};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(atoi(argv[2]));
+    inet_pton(AF_INET, argv[1], &addr.sin_addr);
 
-    // TODO: создайте TCP-сокет (AF_INET, SOCK_STREAM),
-    //       заполните struct sockaddr_in с помощью inet_aton/inet_pton,
-    //       подключитесь через connect,
-    //       реализуйте цикл чтения/отправки/приёма/вывода чисел.
-    //       Порядок байт — Little Endian (на x86/x86_64 это нативный порядок).
+    connect(sock, (struct sockaddr *)&addr, sizeof(addr));
+    int32_t number;
+    int32_t answer;
+
+    while (scanf("%d", &number) == 1) {
+        size_t sent = 0;
+
+        while (sent < sizeof(number)) {
+            ssize_t n = send(
+                sock,
+                (char *)&number + sent,
+                sizeof(number) - sent,
+                MSG_NOSIGNAL
+            );
+
+            if (n < 0) {
+                close(sock);
+                return 0;
+            }
+
+            sent += n;
+        }
+
+        size_t received = 0;
+        while (received < sizeof(answer)) {
+            ssize_t n = recv(
+                sock,
+                (char *)&answer + received,
+                sizeof(answer) - received,
+                0
+            );
+
+            if (n <= 0) {
+                close(sock);
+                return 0;
+            }
+
+            received += n;
+        }
+        printf("%d\n", (int)answer);
+    }
+
+    close(sock);
 
     return 0;
 }
+

@@ -8,10 +8,8 @@
 // Использовать дополнительные процессы запрещено — нужно использовать exec.
 
 int main(void) {
-    // TODO: прочитайте выражение из stdin,
-    //       затем вызовите execvp/execlp для запуска python3,
-    //       который вычислит и выведет результат.
-    //       Подсказка: python3 -c "print(<выражение>)"
+    execlp("python3", "python3", "-c", "print(eval(input()))", NULL);
 
+    perror("execlp");
     return 0;
 }
