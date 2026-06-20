@@ -20,5 +20,31 @@ int main(int argc, char *argv[]) {
     //       запустите CMD2 (argv[2]) так, чтобы его stdin  ← read-конец канала,
     //       дождитесь завершения обоих дочерних процессов.
 
+    int fd[2];
+    pipe(fd);
+
+    if (fork() == 0) {
+        dup2(fd[1], STDOUT_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        execlp(argv[1], argv[1], NULL);
+        _exit(1);
+    }
+
+    if (fork() == 0) {
+        dup2(fd[0], STDIN_FILENO);
+        close(fd[0]);
+        close(fd[1]);
+        execlp(argv[2], argv[2], NULL);
+        _exit(1);
+    }
+
+    close(fd[0]);
+    close(fd[1]);
+    wait(NULL);
+    wait(NULL);
+
     return 0;
 }
+```
+
